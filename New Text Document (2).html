@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📔 Agenda Profesional</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #007BFF, #00C6FF);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        #login-container, #agenda-container {
+            max-width: 400px;
+            margin: 80px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            color: #0056b3;
+            font-size: 26px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .agenda-animada {
+            width: 100px;
+            margin: 10px auto;
+            display: block;
+            animation: flotar 3s infinite ease-in-out;
+        }
+
+        @keyframes flotar {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        input, textarea, select, button {
+            width: 90%;
+            padding: 14px;
+            border: 2px solid #0056b3;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #003f7f;
+            outline: none;
+        }
+
+        button {
+            background: #0056b3;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 12px;
+            width: 95%;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #003f7f;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .cerrar-sesion {
+            background: red;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .cerrar-sesion:hover {
+            background: darkred;
+            transform: scale(1.05);
+        }
+
+        #eventos-lista {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .evento {
+            background: #e9f5ff;
+            padding: 15px;
+            margin: 12px 0;
+            border-left: 6px solid #0056b3;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .evento:hover {
+            background: #cce1ff;
+        }
+
+        .btn-eliminar, .btn-editar {
+            position: absolute;
+            top: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-eliminar {
+            right: 8px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+        }
+
+        .btn-editar {
+            right: 45px;
+            background: #ffc107;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+        }
+
+        .btn-eliminar:hover, .btn-editar:hover {
+            transform: scale(1.1);
+        }
+
+        .agenda-titulo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-container">
+        <h2>📔 Bienvenido a tu Agenda Profesional</h2>
+        <img src="https://cdn-icons-png.flaticon.com/512/2911/2911535.png" alt="Agenda animada" class="agenda-animada">
+        <div class="input-container">
+            <input type="text" id="username" placeholder="Usuario" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button onclick="login()">Iniciar Sesión</button>
+            <button onclick="register()">Registrarse</button>
+        </div>
+    </div>
+
+    <div id="agenda-container" style="display: none;">
+        <h2 id="titulo-agenda" class="agenda-titulo">📒 Tu Agenda</h2>
+        <div class="input-container">
+            <input type="date" id="fecha" required>
+            <input type="time" id="hora" required>
+            <input type="text" id="titulo" placeholder="Título del evento" required>
+            <textarea id="descripcion" placeholder="Descripción del evento" rows="4"></textarea>
+            <label for="importancia"><strong>Importancia del evento:</strong></label>
+            <select id="importancia">
+                <option value="Alta">🔴 Alta</option>
+                <option value="Media">🟠 Media</option>
+                <option value="Baja">🟢 Baja</option>
+            </select>
+            <button onclick="guardarEvento()">Guardar Evento</button>
+        </div>
+        <div id="eventos-lista"></div>
+        <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+
+    <script>
+        let editingIndex = -1;
+
+        window.onload = function() {
+            let currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                document.getElementById('titulo-agenda').innerText = `Agenda de ${currentUser}`;
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('agenda-container').style.display = 'block';
+                mostrarEventos();
+            }
+        };
+
+        function register() {
+            let username = document.getElementById('username').value;
+            let password = document.getElementById('password').value;
+            if (username && password) {
+                localStorage.setItem(`user_${username}`, password);
+                alert('Usuario registrado con éxito. Ahora puede iniciar sesión.');
+            } else {
+                alert('Ingrese usuario y contraseña.');
+            }
+        }
+
+        function login() {
+            let username = document.getElementById('username').value;
+            let password = document.getElementById('password').value;
+            let storedPassword = localStorage.getItem(`user_${username}`);
+            if (storedPassword === password) {
+                localStorage.setItem('currentUser', username);
+                document.getElementById('titulo-agenda').innerText = `Agenda de ${username}`;
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('agenda-container').style.display = 'block';
+                mostrarEventos();
+            } else {
+                alert('Usuario o contraseña incorrectos.');
+            }
+        }
+
+        function guardarEvento() {
+            let fecha = document.getElementById('fecha').value;
+            let hora = document.getElementById('hora').value;
+            let titulo = document.getElementById('titulo').value;
+            let descripcion = document.getElementById('descripcion').value;
+            let importancia = document.getElementById('importancia').value;
+            let currentUser = localStorage.getItem('currentUser');
+
+            if (fecha && hora && titulo) {
+                let eventos = JSON.parse(localStorage.getItem(`eventos_${currentUser}`)) || [];
+                if (editingIndex >= 0) {
+                    eventos[editingIndex] = { fecha, hora, titulo, descripcion, importancia };
+                    editingIndex = -1;
+                } else {
+                    eventos.push({ fecha, hora, titulo, descripcion, importancia });
+                }
+                localStorage.setItem(`eventos_${currentUser}`, JSON.stringify(eventos));
+                mostrarEventos();
+
+                document.getElementById('fecha').value = '';
+                document.getElementById('hora').value = '';
+                document.getElementById('titulo').value = '';
+                document.getElementById('descripcion').value = '';
+                document.getElementById('importancia').value = 'Alta';
+            } else {
+                alert('Por favor, completa todos los campos.');
+            }
+        }
+
+        function mostrarEventos() {
+            let eventosLista = document.getElementById('eventos-lista');
+            eventosLista.innerHTML = '';
+            let currentUser = localStorage.getItem('currentUser');
+            let eventos = JSON.parse(localStorage.getItem(`eventos_${currentUser}`)) || [];
+
+            eventos.forEach((evento, index) => {
+                eventosLista.innerHTML += `
+                    <div class="evento">
+                        <button class="btn-eliminar" onclick="eliminarEvento(${index})">✖</button>
+                        <button class="btn-editar" onclick="editarEvento(${index})">✏️</button>
+                        <strong>${evento.fecha} - ${evento.hora}</strong><br>
+                        <strong>${evento.titulo}</strong><br>
+                        ${evento.descripcion ? evento.descripcion + '<br>' : ''}
+                        <strong>Importancia:</strong> ${evento.importancia}
+                    </div>`;
+            });
+        }
+
+        function eliminarEvento(index) {
+            let currentUser = localStorage.getItem('currentUser');
+            let eventos = JSON.parse(localStorage.getItem(`eventos_${currentUser}`)) || [];
+            eventos.splice(index, 1);
+            localStorage.setItem(`eventos_${currentUser}`, JSON.stringify(eventos));
+            mostrarEventos();
+        }
+
+        function editarEvento(index) {
+            let currentUser = localStorage.getItem('currentUser');
+            let eventos = JSON.parse(localStorage.getItem(`eventos_${currentUser}`)) || [];
+            let evento = eventos[index];
+
+            document.getElementById('fecha').value = evento.fecha;
+            document.getElementById('hora').value = evento.hora;
+            document.getElementById('titulo').value = evento.titulo;
+            document.getElementById('descripcion').value = evento.descripcion || '';
+            document.getElementById('importancia').value = evento.importancia;
+
+            editingIndex = index;
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('eventos_' + localStorage.getItem('currentUser')); // Limpiar eventos al cerrar sesión
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('agenda-container').style.display = 'none';
+
+            // Limpiar el formulario de inicio de sesión
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+    </script>
+
+</body>
+</html>
+
+
+
+
+
