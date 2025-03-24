@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📔 Agenda Segura</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <h2>📒 Agenda Segura</h2>
+    <input type="text" id="username" placeholder="Usuario">
+    <input type="password" id="password" placeholder="Contraseña">
+    <button onclick="register()">Registrarse</button>
+    <button onclick="login()">Iniciar Sesión</button>
+    <div id="eventos" style="display: none;">
+        <input type="text" id="evento" placeholder="Nuevo evento">
+        <button onclick="guardarEvento()">Guardar</button>
+        <div id="lista-eventos"></div>
+    </div>
+</div>
+
+<script>
+    function register() {
+        let user = document.getElementById('username').value;
+        let pass = document.getElementById('password').value;
+        if (user && pass) {
+            localStorage.setItem(`user_${user}`, pass);
+            alert('Usuario registrado con éxito.');
+        } else {
+            alert('Ingrese usuario y contraseña.');
+        }
+    }
+    
+    function login() {
+        let user = document.getElementById('username').value;
+        let pass = document.getElementById('password').value;
+        let storedPass = localStorage.getItem(`user_${user}`);
+        if (storedPass === pass) {
+            document.getElementById('eventos').style.display = 'block';
+        } else {
+            alert('Credenciales incorrectas.');
+        }
+    }
+    
+    function guardarEvento() {
+        let evento = document.getElementById('evento').value;
+        if (evento && evento.length < 100) {  // Validación básica
+            let eventos = JSON.parse(localStorage.getItem('eventos')) || [];
+            eventos.push(evento);
+            localStorage.setItem('eventos', JSON.stringify(eventos));
+            mostrarEventos();
+        } else {
+            alert('Evento no válido.');
+        }
+    }
+    
+    function mostrarEventos() {
+        let lista = document.getElementById('lista-eventos');
+        lista.innerHTML = '';
+        let eventos = JSON.parse(localStorage.getItem('eventos')) || [];
+        eventos.forEach((ev, index) => {
+            lista.innerHTML += `<div>${ev} <button onclick="eliminarEvento(${index})">X</button></div>`;
+        });
+    }
+    
+    function eliminarEvento(index) {
+        let eventos = JSON.parse(localStorage.getItem('eventos')) || [];
+        eventos.splice(index, 1);
+        localStorage.setItem('eventos', JSON.stringify(eventos));
+        mostrarEventos();
+    }
+</script>
+</body>
+</html>
